@@ -67,9 +67,7 @@ def make_suggest(data: user_data):
     if adj_goal_price <= 0.0:
         return {"Error": "Goal price must be greater than 0."}
 
-    # -----------------------
     # 1) Money if NOT investing (savings account outcome)
-    # -----------------------
     # Note: assume that the money that does nothing always goes to savings account
 
     fv_saving_now = data.saving_now * ((1.0 + r_s) ** years)
@@ -94,9 +92,7 @@ def make_suggest(data: user_data):
         "pct_goal_covered": float(min(1.0, fv_total_savings / adj_goal_price)) if adj_goal_price > 0 else 0.0
     }
 
-    # -----------------------
     # 2) For each stock: compute investment plan (lump-sum today + annual contributions from surplus)
-    # -----------------------
     # Note: assume that user will invest with every avalilable, and the money that does nothing always goes to savings account
 
     stock_results = []
@@ -187,9 +183,7 @@ def make_suggest(data: user_data):
         })
         # print("Processed:", sym)
 
-    # -----------------------
     # 3) Sort and suggest
-    # -----------------------
     allowed = [s for s in stock_results if s["below_user_risk"]]
     upper_risk = [s for s in stock_results if not s["below_user_risk"]]
     upper_risk_sorted = sorted(upper_risk, key=lambda x: (x["prob_gain"], x["real_profit_at_goal"]), reverse=True)
@@ -198,9 +192,7 @@ def make_suggest(data: user_data):
     suggestions = []
     suggestions = allowed_sorted[:3] + upper_risk_sorted[:3]
 
-    # -----------------------
     # Build response
-    # -----------------------
     res["no_investment"] = no_investment
     #res["stock_analysis"] = stock_results
     res["suggestions"] = suggestions
