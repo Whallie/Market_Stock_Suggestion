@@ -3,7 +3,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 from pprint import pprint
-import MS_Map_Cat as mc
+from app import MS_Map_Cat as mc
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
