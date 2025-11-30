@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 from pprint import pprint
+import MS_Map_Cat as mc
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +32,7 @@ def forecast_stock_prices(years_forecast, n_sims=10000, tickers = tk):
     if years_forecast <= 0:
         return {"Error": "Years forecast must be greater than 0."}
     
-    yst = datetime.now().year - 20
+    yst = datetime.now().year - years_forecast
     start = f"{str(yst)}-1-1"
     end = datetime.today().strftime('%Y-%m-%d')
 
@@ -76,12 +77,14 @@ def forecast_stock_prices(years_forecast, n_sims=10000, tickers = tk):
             continue
         
         res[ticker] = {
+            "Name": mc.get_sector(ticker),
             "start_price": float(S0),
             "median": float(median),
             "mean": float(mean),
-            "prob_gain": float(prob_gain)
+            "prob_gain": float(prob_gain),
+            "prob_loss": 1.0-float(prob_gain)
         }
     return res
 #----------------------------------------------------------------------------------#
 
-#pprint(forecast_stock_prices(5))
+# pprint(forecast_stock_prices(5))

@@ -2,3 +2,5 @@
 !requirements.txt
 Pull_data.py
 __pycache__/
+MS_main_old.py
+th_index.csv
