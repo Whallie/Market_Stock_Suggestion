@@ -27,7 +27,7 @@ class user_data(BaseModel):
     risk_lv : int = 1 # 1 to 5: 90 70 50 30 10 percent of risk 
     emergency : float = 0.0 # money that won't be used for investment (must <= all_money)
 
-@app.post("/MS_suggestion")
+@app.post("/market_stock/suggestion")
 
 def make_suggest(data: user_data):
     res = {}
