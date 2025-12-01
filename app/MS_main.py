@@ -18,9 +18,9 @@ class user_data(BaseModel):
     n_sims : int = 5000
 
 
-@app.post("/market_stock/suggestion")
+@app.post("/market_stock/listing")
 
-def make_suggest(req : user_data):
+def simulate(req : user_data):
     res = ms.forecast_stock_prices(years_forecast=req.years_forecast, n_sims=req.n_sims)
 
     return res
