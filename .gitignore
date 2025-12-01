@@ -4,3 +4,7 @@ Pull_data.py
 __pycache__/
 MS_main_old.py
 th_index.csv
+MS_FC_test.py
+MS_Map_Cat.py
+th_all.csv
+thai_yahoo_symbols.csv
