@@ -6,11 +6,13 @@ from pprint import pprint
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(BASE_DIR, "..", "data", "Checked_Stock_Inds.csv")
+csv_path = os.path.join(BASE_DIR, "..", "data", "Industry_sorted.csv")
 df_tk = pd.read_csv(csv_path, dtype=str)
-cant_cal = ['S&J', 'WELL', 'ACAP', 'MNIT', 'TAPAC', 'TIF1', 'MANRIN']
-
+cant_cal = ['S&J', 'WELL', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ', 'S&J', 'WELL', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ', 'ACAP', 'GSTEEL', 'MIPF', 'MNIT', 'QHBREIT', 'QHOP', 'TAPAC', 'TIF1', 'TU-PF', 'SGP', 'MANRIN', 'SIS', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ']
+cut_ind = ['Technology', 'Property & Construction', 'Agro & Food Industry', 'Resources']
 fail = []
+
+year_window = 15
 
 #----------------------------------------------------------------------------------#
 def monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years, n_sims=10000):
@@ -27,17 +29,20 @@ def monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years, n_sims=10000):
 #----------------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------------------#
-def forecast_stock_prices(years_forecast, n_sims=5000):
+def forecast_stock_prices(years_forecast, n_sims=10000):
     if years_forecast <= 0:
         return {"Error": "Years forecast must be greater than 0."}
     
-    yst = datetime.now().year - years_forecast
+    yst = datetime.now().year - year_window
     start = f"{str(yst)}-01-01"
     end = datetime.today().strftime('%Y-%m-%d')
 
     res = {}
 
     for index, row in df_tk.iterrows():
+        indus = df_tk.iloc[index, 0]
+        if (indus in cut_ind):
+            continue
         now_tk = []
         cnt = 0
         for cols in df_tk.columns:
@@ -45,7 +50,7 @@ def forecast_stock_prices(years_forecast, n_sims=5000):
             if (cnt >= 2 and pd.isna(df_tk.iloc[index, cnt-1]) == False):
                 if (str(df_tk.iloc[index, cnt-1]) in cant_cal):
                     continue
-                now_tk.append(str(df_tk.iloc[index, cnt-1])+".BK")
+                now_tk.append(str(df_tk.iloc[index, cnt-1]))
             elif (cnt >= 2):
                 break
 
@@ -92,8 +97,6 @@ def forecast_stock_prices(years_forecast, n_sims=5000):
         median = np.median(last_price)
         mean = np.mean(last_price)
         prob_gain = np.mean(last_price >= S0)
-        
-        indus = df_tk.iloc[index, 0]
 
         if np.isnan(median) or np.isnan(mean) or prob_gain == 0:
             fail.append(indus)

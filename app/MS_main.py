@@ -14,8 +14,8 @@ import os
 app = FastAPI(title="Market Stock List API")
 
 class user_data(BaseModel):
-    years_forecast : int = 20
-    n_sims : int = 5000
+    years_forecast : int = 10
+    n_sims : int = 50000
 
 
 @app.post("/market_stock/listing")
