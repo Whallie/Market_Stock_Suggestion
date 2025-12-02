@@ -55,8 +55,15 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
                 break
 
         df_now = pd.DataFrame()
+        ch = 1
         for t in now_tk:
-            df_daily = yf.download(t, start=start, end=end, interval="1d", auto_adjust=True, progress=True)
+            try:
+                df_daily = yf.download(t, start=start, end=end, interval="1d", auto_adjust=True, progress=True)
+            except:
+                ch = 0
+                res['Error'] = "Can not call data now. Try after a while"
+                break
+
             if len(df_daily) < 2:
                 continue
             if "Adj Close" in df_daily.columns:
@@ -83,33 +90,34 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
                 continue
             df_now = df_now.add(price_monthly, fill_value=0)
 
-        BMV = df_now.iloc[0]['Value']
-        df_now['Value'] = (df_now['Value']/BMV)*100.0
-        # print(df_now.head)
-        log_returns_monthly = np.log(df_now / df_now.shift(1)).dropna()
-        mu_y = float(log_returns_monthly.mean()) * 12.0
-        sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
-        S0 = df_now.iloc[-1]
-        paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
-        S0 = float(S0)
-        last_price = paths[-1, :]
+        if (ch):
+            BMV = df_now.iloc[0]['Value']
+            df_now['Value'] = (df_now['Value']/BMV)*100.0
+            # print(df_now.head)
+            log_returns_monthly = np.log(df_now / df_now.shift(1)).dropna()
+            mu_y = float(log_returns_monthly.mean()) * 12.0
+            sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
+            S0 = df_now.iloc[-1]
+            paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
+            S0 = float(S0)
+            last_price = paths[-1, :]
 
-        median = np.median(last_price)
-        mean = np.mean(last_price)
-        prob_gain = np.mean(last_price >= S0)
+            median = np.median(last_price)
+            mean = np.mean(last_price)
+            prob_gain = np.mean(last_price >= S0)
 
-        if np.isnan(median) or np.isnan(mean) or prob_gain == 0:
-            fail.append(indus)
-            continue
-        
-        res[indus] = {
-            "Name": indus,
-            "start_price": float(S0),
-            "median": float(median),
-            "mean": float(mean),
-            "prob_gain": float(prob_gain),
-            "prob_loss": 1.0-float(prob_gain)
-        }
+            if np.isnan(median) or np.isnan(mean) or prob_gain == 0:
+                fail.append(indus)
+                continue
+            
+            res[indus] = {
+                "Name": indus,
+                "start_price": float(S0),
+                "median": float(median),
+                "mean": float(mean),
+                "prob_gain": float(prob_gain),
+                "prob_loss": 1.0-float(prob_gain)
+            }
 
     return res
 #----------------------------------------------------------------------------------#
