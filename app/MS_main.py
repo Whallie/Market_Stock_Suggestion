@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
-from app import MS_FC as ms
+import MS_FC as ms
 import numpy as np
 import pandas as pd
 import math as ma

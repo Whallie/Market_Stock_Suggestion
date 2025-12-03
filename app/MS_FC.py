@@ -4,12 +4,16 @@ import yfinance as yf
 from datetime import datetime
 from pprint import pprint
 import os
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(BASE_DIR, "..", "data", "Industry_sorted.csv")
+csv_path = os.path.join(BASE_DIR, "..", "data", "Industry_sorted_10.csv")
 df_tk = pd.read_csv(csv_path, dtype=str)
-cant_cal = ['S&J', 'WELL', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ', 'S&J', 'WELL', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ', 'ACAP', 'GSTEEL', 'MIPF', 'MNIT', 'QHBREIT', 'QHOP', 'TAPAC', 'TIF1', 'TU-PF', 'SGP', 'MANRIN', 'SIS', 'SMT', 'SVI', 'SVOA', 'SYMC', 'SYNEX', 'TEAM', 'THCOM', 'TRUE', 'TWZ']
-cut_ind = ['Technology', 'Property & Construction', 'Agro & Food Industry', 'Resources']
+cant_cal = ['S&J', 'WELL', 'S&J', 'WELL', 'ACAP', 'GSTEEL', 'MIPF', 'MNIT', 'QHBREIT', 'QHOP', 'TAPAC', 'TIF1', 'TU-PF', 'SGP', 'MANRIN']
+cut_ind = ['Property & Construction','Agro & Food Industry','Technology']
 fail = []
 
 year_window = 15
@@ -38,6 +42,7 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
     end = datetime.today().strftime('%Y-%m-%d')
 
     res = {}
+    res["Last_Time"] = str(end)
 
     for index, row in df_tk.iterrows():
         indus = df_tk.iloc[index, 0]
@@ -58,7 +63,7 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
         ch = 1
         for t in now_tk:
             try:
-                df_daily = yf.download(t, start=start, end=end, interval="1d", auto_adjust=True, progress=True)
+                df_daily = yf.download(t, start=start, end=end, interval="1d", auto_adjust=False, progress=False)
             except:
                 ch = 0
                 res['Error'] = "Can not call data now. Try after a while"
@@ -66,10 +71,10 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
 
             if len(df_daily) < 2:
                 continue
-            if "Adj Close" in df_daily.columns:
-                price_daily = df_daily["Adj Close"].copy()
-            elif "Close" in df_daily.columns:
+            if "Close" in df_daily.columns:
                 price_daily = df_daily["Close"].copy()
+            elif "Adj Close" in df_daily.columns:
+                price_daily = df_daily["Adj Close"].copy()
             else:
                 price_daily = df_daily.iloc[:, 3].copy()
 
