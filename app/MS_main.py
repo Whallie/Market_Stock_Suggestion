@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 from app import MS_FC as ms
@@ -12,6 +13,14 @@ import os
 #df_market = pd.read_csv(csv_path, dtype=str)
 
 app = FastAPI(title="Market Stock List API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class user_data(BaseModel):
     years_forecast : int = 10
