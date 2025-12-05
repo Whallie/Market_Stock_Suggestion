@@ -14,7 +14,30 @@ csv_path = os.path.join(BASE_DIR, "..", "data", "Industry_sorted_10.csv")
 df_tk = pd.read_csv(csv_path, dtype=str)
 cant_cal = ['S&J', 'WELL', 'S&J', 'WELL', 'ACAP', 'GSTEEL', 'MIPF', 'MNIT', 'QHBREIT', 'QHOP', 'TAPAC', 'TIF1', 'TU-PF', 'SGP', 'MANRIN']
 cut_ind = ['Property & Construction','Agro & Food Industry','Technology']
+all_ind = ['Industrial', 'Technology', 'Consumer Products', 'Property & Construction', 'Agro & Food Industry', 'Services', 'Resources', 'Financials']
 fail = []
+
+name_ind = {
+    "Industrial" : "สินค้าอุตสาหกรรม",
+    "Technology" : "เทคโนโลยี",
+    "Consumer Products" : "สินค้าอุปโภคบริโภค",
+    "Property & Construction": "อสังหาริมทรัพย์และก่อสร้าง",
+    "Agro & Food Industry": "เกษตรและอุตสาหกรรมอาหาร",
+    "Services" : "บริการ",
+    "Resources" : "ทรัพยากร",
+    "Financials" : "ธุรกิจการเงิน"
+}
+
+call_ind = {
+    "Industrial" : "INDUS",
+    "Technology" : "TECH",
+    "Consumer Products" : "CONSUMP",
+    "Property & Construction": "PROPCON",
+    "Agro & Food Industry": "ARGO",
+    "Services" : "SERVICE",
+    "Resources" : "RESOURC",
+    "Financials" : "FINCIAL"
+}
 
 year_window = 15
 
@@ -42,87 +65,74 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
     end = datetime.today().strftime('%Y-%m-%d')
 
     res = {}
-    res["Last_Time"] = str(end)
+    res["Last_Time_for_index"] = None
+    res["Last_Time_for_SET"] = None
+    res["SET"] = None
+    ch = 1
+    try:
+        df_daily = yf.download("^SET.BK", start=start, end=end, interval="1d", auto_adjust=False, progress=False)
+    except:
+        ch = 0
+    if (ch and len(df_daily) >= 2):
+        price_daily = df_daily["Close"].copy()
+        price_daily = price_daily.dropna()
+        price_daily.index = pd.to_datetime(price_daily.index)
+        price_monthly = price_daily.resample('ME').last().dropna()
+        log_returns_monthly = np.log(price_monthly / price_monthly.shift(1)).dropna()
+        mu_y = float(log_returns_monthly.mean()) * 12.0
+        sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
+        S0 = price_monthly.iloc[-1]
+        paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
+        S0 = float(S0)
+        last_price = paths[-1, :]
 
-    for index, row in df_tk.iterrows():
-        indus = df_tk.iloc[index, 0]
-        if (indus in cut_ind):
-            continue
-        now_tk = []
-        cnt = 0
-        for cols in df_tk.columns:
-            cnt += 1
-            if (cnt >= 2 and pd.isna(df_tk.iloc[index, cnt-1]) == False):
-                if (str(df_tk.iloc[index, cnt-1]) in cant_cal):
-                    continue
-                now_tk.append(str(df_tk.iloc[index, cnt-1]))
-            elif (cnt >= 2):
-                break
+        median = np.median(last_price)
+        mean = np.mean(last_price)
+        prob_gain = np.mean(last_price >= S0)
 
-        df_now = pd.DataFrame()
-        ch = 1
-        for t in now_tk:
-            try:
-                df_daily = yf.download(t, start=start, end=end, interval="1d", auto_adjust=False, progress=False)
-            except:
-                ch = 0
-                res['Error'] = "Can not call data now. Try after a while"
-                break
-
-            if len(df_daily) < 2:
-                continue
-            if "Close" in df_daily.columns:
-                price_daily = df_daily["Close"].copy()
-            elif "Adj Close" in df_daily.columns:
-                price_daily = df_daily["Adj Close"].copy()
-            else:
-                price_daily = df_daily.iloc[:, 3].copy()
-
-            price_daily = price_daily.dropna()
-            price_daily.index = pd.to_datetime(price_daily.index)
-
-            if (price_daily.index[0].year != pd.to_datetime(start).year):
-                continue
-
-            price_monthly = price_daily.resample('ME').last().dropna()
-            price_monthly = price_monthly.rename(columns={price_monthly.columns[0]: "Value"})
-            now_so = yf.Ticker(t).info['sharesOutstanding']
-            now_fs = yf.Ticker(t).info['floatShares']
-            now_ff = now_fs/now_so
-            price_monthly['Value'] = price_monthly['Value']*now_so*now_ff
-            if (df_now.empty):
-                df_now = price_monthly.copy()
-                continue
-            df_now = df_now.add(price_monthly, fill_value=0)
-
-        if (ch):
-            BMV = df_now.iloc[0]['Value']
-            df_now['Value'] = (df_now['Value']/BMV)*100.0
-            # print(df_now.head)
-            log_returns_monthly = np.log(df_now / df_now.shift(1)).dropna()
-            mu_y = float(log_returns_monthly.mean()) * 12.0
-            sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
-            S0 = df_now.iloc[-1]
-            paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
-            S0 = float(S0)
-            last_price = paths[-1, :]
-
-            median = np.median(last_price)
-            mean = np.mean(last_price)
-            prob_gain = np.mean(last_price >= S0)
-
-            if np.isnan(median) or np.isnan(mean) or prob_gain == 0:
-                fail.append(indus)
-                continue
-            
-            res[indus] = {
-                "Name": indus,
+        if not(np.isnan(median) or np.isnan(mean) or prob_gain == 0):
+            res["SET"] = {
+                "Name": "ตลาดหลักทรัพย์แห่งประเทศไทย",
                 "start_price": float(S0),
                 "median": float(median),
                 "mean": float(mean),
                 "prob_gain": float(prob_gain),
                 "prob_loss": 1.0-float(prob_gain)
             }
+            res["Last_Time_for_SET"] = str(start)
+    
+    for ind in all_ind:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        fn = str(ind) + ".csv"
+        csv_path = os.path.join(BASE_DIR, "..", "data", "stockdata", fn)
+        df = pd.read_csv(csv_path, index_col=0, parse_dates=True)
+        log_returns_monthly = np.log(df / df.shift(1)).dropna()
+        mu_y = float(log_returns_monthly.mean()) * 12.0
+        sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
+        S0 = df.iloc[-1]
+        paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
+        S0 = float(S0)
+        last_price = paths[-1, :]
+
+        median = np.median(last_price)
+        mean = np.mean(last_price)
+        prob_gain = np.mean(last_price >= S0)
+
+        if np.isnan(median) or np.isnan(mean) or prob_gain == 0:
+            fail.append(ind)
+            continue
+        
+        res[call_ind[ind]] = {
+            "Name": name_ind[ind],
+            "start_price": float(S0),
+            "median": float(median),
+            "mean": float(mean),
+            "prob_gain": float(prob_gain),
+            "prob_loss": 1.0-float(prob_gain)
+        }
+
+        if (res['Last_Time_for_index'] == None):
+            res['Last_Time_for_index'] = str(df.index[0])[:10]
 
     return res
 #----------------------------------------------------------------------------------#
