@@ -66,40 +66,40 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
 
     res = {}
     res["Last_Time_for_index"] = None
-    # res["Last_Time_for_SET"] = None
-    # res["SET"] = None
-    # ch = 1
-    # try:
-    #     df_daily = yf.download("^SET.BK", start=start, end=end, interval="1d", auto_adjust=False, progress=False)
-    # except:
-    #     ch = 0
-    # if (ch and len(df_daily) >= 2):
-    #     price_daily = df_daily["Close"].copy()
-    #     price_daily = price_daily.dropna()
-    #     price_daily.index = pd.to_datetime(price_daily.index)
-    #     price_monthly = price_daily.resample('ME').last().dropna()
-    #     log_returns_monthly = np.log(price_monthly / price_monthly.shift(1)).dropna()
-    #     mu_y = float(log_returns_monthly.mean()) * 12.0
-    #     sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
-    #     S0 = price_monthly.iloc[-1]
-    #     paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
-    #     S0 = float(S0)
-    #     last_price = paths[-1, :]
+    res["Last_Time_for_SET"] = None
+    res["SET"] = None
+    ch = 1
+    try:
+        df_daily = yf.download("^SET.BK", start=start, end=end, interval="1d", auto_adjust=False, progress=False)
+    except:
+        ch = 0
+    if (ch and len(df_daily) >= 2):
+        price_daily = df_daily["Close"].copy()
+        price_daily = price_daily.dropna()
+        price_daily.index = pd.to_datetime(price_daily.index)
+        price_monthly = price_daily.resample('ME').last().dropna()
+        log_returns_monthly = np.log(price_monthly / price_monthly.shift(1)).dropna()
+        mu_y = float(log_returns_monthly.mean()) * 12.0
+        sigma_y = float(log_returns_monthly.std(ddof=1)) * np.sqrt(12.0)
+        S0 = price_monthly.iloc[-1]
+        paths = monte_carlo_gbm_monthly(S0, mu_y, sigma_y, years_forecast, n_sims=n_sims)
+        S0 = float(S0)
+        last_price = paths[-1, :]
 
-    #     median = np.median(last_price)
-    #     mean = np.mean(last_price)
-    #     prob_gain = np.mean(last_price >= S0)
+        median = np.median(last_price)
+        mean = np.mean(last_price)
+        prob_gain = np.mean(last_price >= S0)
 
-    #     if not(np.isnan(median) or np.isnan(mean) or prob_gain == 0):
-    #         res["SET"] = {
-    #             "Name": "ตลาดหลักทรัพย์แห่งประเทศไทย",
-    #             "start_price": float(S0),
-    #             "median": float(median),
-    #             "mean": float(mean),
-    #             "prob_gain": float(prob_gain),
-    #             "prob_loss": 1.0-float(prob_gain)
-    #         }
-    #         res["Last_Time_for_SET"] = str(end)
+        if not(np.isnan(median) or np.isnan(mean) or prob_gain == 0):
+            res["SET"] = {
+                "Name": "ตลาดหลักทรัพย์แห่งประเทศไทย",
+                "start_price": float(S0),
+                "median": float(median),
+                "mean": float(mean),
+                "prob_gain": float(prob_gain),
+                "prob_loss": 1.0-float(prob_gain)
+            }
+            res["Last_Time_for_SET"] = str(end)
     
     for ind in all_ind:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
