@@ -8,10 +8,6 @@ import pandas as pd
 import math as ma
 import os
 
-#BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-#csv_path = os.path.join(BASE_DIR, "..", "data", "th_index.csv")
-#df_market = pd.read_csv(csv_path, dtype=str)
-
 app = FastAPI(title="Market Stock List API")
 
 app.add_middleware(
