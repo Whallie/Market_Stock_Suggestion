@@ -99,7 +99,7 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
                 "prob_gain": float(prob_gain),
                 "prob_loss": 1.0-float(prob_gain)
             }
-            res["Last_Time_for_SET"] = str(start)
+            res["Last_Time_for_SET"] = str(end)
     
     for ind in all_ind:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -132,7 +132,7 @@ def forecast_stock_prices(years_forecast, n_sims=10000):
         }
 
         if (res['Last_Time_for_index'] == None):
-            res['Last_Time_for_index'] = str(df.index[0])[:10]
+            res['Last_Time_for_index'] = str(df.index[-1])[:10]
 
     return res
 #----------------------------------------------------------------------------------#
